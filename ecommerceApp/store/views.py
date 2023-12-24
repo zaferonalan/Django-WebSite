@@ -1,6 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import JsonResponse
 import json
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login
+
+from django.views import View
 from .models import *
 # Create your views here.
 
@@ -73,3 +77,31 @@ def updateItem(request):
         orderItem.delete()
         
     return JsonResponse('Eklendi', safe=False)
+
+def login_view(request):
+    if request.method == 'POST':
+        # Login formu burada işlenecek
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')  # Kullanıcı başarıyla giriş yaparsa yönlendirilecek sayfa
+        else:
+            # Hatalı giriş durumu
+            return render(request, 'store/login.html', {'error_message': 'Invalid login credentials'})
+
+    return render(request, 'store/login.html')
+
+def register_view(request):
+    if request.method == 'POST':
+        # Kayıt formu burada işlenecek
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('home')  # Kullanıcı başarıyla kayıt olursa yönlendirilecek sayfa
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'store/register.html', {'form': form})
